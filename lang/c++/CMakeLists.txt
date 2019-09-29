@@ -20,7 +20,9 @@ cmake_minimum_required (VERSION 2.6)
 
 set (CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-cmake_policy (SET CMP0042 NEW)
+if(POLICY CMP0042)
+    cmake_policy(SET CMP0042 NEW)
+endif(POLICY CMP0042)
 
 if (NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
     set (CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
@@ -153,13 +155,18 @@ gen (primitivetypes pt)
 add_executable (avrogencpp impl/avrogencpp.cc)
 target_link_libraries (avrogencpp avrocpp_s ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
 
-enable_testing()
+option(ENABLE_TESTS "Enable tests" OFF)
+if (${ENABLE_TESTS})
+    enable_testing()
+endif()
 
 macro (unittest name)
-    add_executable (${name} test/${name}.cc)
-    target_link_libraries (${name} avrocpp ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
-    add_test (NAME ${name} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${name})
+    if (${ENABLE_TESTS})
+        add_executable (${name} test/${name}.cc)
+        target_link_libraries (${name} avrocpp ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
+        add_test (NAME ${name} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${name})
+    endif()
 endmacro (unittest)
 
 unittest (buffertest)
@@ -174,7 +181,11 @@ unittest (JsonTests)
 unittest (AvrogencppTests)
 unittest (CompilerTests)
 
-add_dependencies (AvrogencppTests bigrecord_hh bigrecord_r_hh bigrecord2_hh
+if (${ENABLE_TESTS})
+    add_dependencies (AvrogencppTests)
+endif()
+
+add_dependencies (bigrecord_hh bigrecord_r_hh bigrecord2_hh
     tweet_hh
     union_array_union_hh union_map_union_hh union_conflict_hh
     recursive_hh reuse_hh circulardep_hh tree1_hh tree2_hh crossref_hh
